@@ -4,57 +4,58 @@ pragma solidity ^0.8.9;
 //import "hardhat/console.sol";
 
 contract Assessment {
-    address payable public owner;
+    
     uint256 public balance;
-
-    event Deposit(uint256 amount);
-    event Withdraw(uint256 amount);
+    mapping(uint256=>uint256)public price;
+    string[] public array;
 
     constructor(uint initBalance) payable {
-        owner = payable(msg.sender);
+        price[0]=2;
+        price[1]=4;
+        price[2]=6;
         balance = initBalance;
     }
 
-    function getBalance() public view returns(uint256){
-        return balance;
+    function getBalance() public view returns(uint256,string[] memory){
+        return (balance,array);
     }
 
-    function deposit(uint256 _amount) public payable {
-        uint _previousBalance = balance;
-
-        // make sure this is the owner
-        require(msg.sender == owner, "You are not the owner of this account");
-
-        // perform transaction
-        balance += _amount;
-
-        // assert transaction completed successfully
-        assert(balance == _previousBalance + _amount);
-
-        // emit the event
-        emit Deposit(_amount);
+    function buyColor(uint256 id) public payable {
+        balance-=price[id];
+        if(id==0){
+            array.push("Red");
+        }
+        if(id==1){
+            array.push("Yellow");
+        }
+        if(id==2){
+            array.push("Green");
+        }
+        
     }
 
-    // custom error
-    error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
+        function sellColor(uint256 id) public {
+        require(id >= 0 && id <= 2, "Invalid color ID");
 
-    function withdraw(uint256 _withdrawAmount) public {
-        require(msg.sender == owner, "You are not the owner of this account");
-        uint _previousBalance = balance;
-        if (balance < _withdrawAmount) {
-            revert InsufficientBalance({
-                balance: balance,
-                withdrawAmount: _withdrawAmount
-            });
+        if (id == 0) {
+            _removeColor("Red");
+        } else if (id == 1) {
+            _removeColor("Yellow");
+        } else if (id == 2) {
+            _removeColor("Green");
         }
 
-        // withdraw the given amount
-        balance -= _withdrawAmount;
+        balance += price[id];
+    }
 
-        // assert the balance is correct
-        assert(balance == (_previousBalance - _withdrawAmount));
-
-        // emit the event
-        emit Withdraw(_withdrawAmount);
+    function _removeColor(string memory color) internal {
+        uint256 length = array.length;
+        for (uint256 i = 0; i < length; i++) {
+            if (keccak256(bytes(array[i])) == keccak256(bytes(color))) {
+                array[i] = array[length - 1];
+                array.pop();
+                break;
+            }
+        }
     }
 }
